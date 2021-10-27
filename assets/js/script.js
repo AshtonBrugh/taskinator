@@ -35,7 +35,6 @@ var taskFormHandler = function(event) {
 
     createTaskEl(taskDataObj);   
 
-    formEl.reset();
 
 };
 
@@ -50,14 +49,31 @@ listItemEl.setAttribute("data-task-id", taskIdCounter);
 // create div to hold task info and add to list item
 var taskInfoEl = document.createElement("div");
 taskInfoEl.className = "task-info";
-taskInfoEl.innerHTML = "<h3 class='task-name'>" + taskDataObj.name + "</h3><span class='task-type'>" + taskDataObj.type + "</span>";
+taskInfoEl.innerHTML = 
+    "<h3 class='task-name'>" + taskDataObj.name + "</h3><span class='task-type'>" + taskDataObj.type + "</span>";
 listItemEl.appendChild(taskInfoEl);
 
 var taskActionsEl = createTaskActions(taskIdCounter);
 listItemEl.appendChild(taskActionsEl);
 
-// add entire list item to list
-tasksToDoEl.appendChild(listItemEl);
+
+switch (taskDataObj.status) {
+    case "to do":
+      taskActionsEl.querySelector("select[name='status-change']").selectedIndex = 0;
+      tasksToDoEl.append(listItemEl);
+      break;
+    case "in progress":
+      taskActionsEl.querySelector("select[name='status-change']").selectedIndex = 1;
+      tasksInProgressEl.append(listItemEl);
+      break;
+    case "completed":
+      taskActionsEl.querySelector("select[name='status-change']").selectedIndex = 2;
+      tasksCompletedEl.append(listItemEl);
+      break;
+    default:
+      console.log("Something went wrong!");
+  }
+
 
 taskDataObj.id = taskIdCounter;
 
@@ -154,6 +170,8 @@ var createTaskActions = function(taskId) {
     };
 
     var editTask = function(taskId) {
+        console.log(taskId);
+
         //get task list item element
         var taskSelected = document.querySelector(".task-item[data-task-id='" + taskId + "']");
 
@@ -163,11 +181,15 @@ var createTaskActions = function(taskId) {
 
         document.querySelector("input[name='task-name']").value = taskName;
         document.querySelector("select[name='task-type']").value = taskType;
+
+          // set data attribute to the form with a value of the task's id so it knows which one is being edited
+        formEl.setAttribute("data-task-id", taskId);
+        // update form's button to reflect editing a task rather than creating a new one
         document.querySelector("#save-task").textContent = "Save Task";
 
         formEl.setAttribute("data-task-id", taskId);
         
-    }
+    };
 
     var completeEditTask = function(taskName, taskType, taskId) {
         //find the matching task list item
@@ -228,6 +250,23 @@ var createTaskActions = function(taskId) {
        localStorage.setItem("tasks", JSON.stringify(tasks)); 
     }
 
+    var loadTasks = function(){
+       var savedTasks = localStorage.getItem("tasks");
+
+        if (!savedTasks) {
+            tasks = [];
+            return false;
+        }
+
+        savedTasks = JSON.parse(savedTasks);
+
+        //loop through savedTasks array
+        for (var i = 0; i < savedTasks.length; i++){
+            //pass each task object into the 'createTaskEl()' function
+            createTaskEl(savedTasks[i]);
+        }
+          };
+
 
 //Create a new task
 formEl.addEventListener("submit", taskFormHandler);
@@ -237,4 +276,5 @@ pageContentEl.addEventListener("click", taskButtonHandler);
 
 pageContentEl.addEventListener("change", taskStatusChangeHandler);
 
+loadTasks();
 
